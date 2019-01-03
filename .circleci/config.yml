@@ -11,16 +11,25 @@ commands:
   prepare-env:
     description: "Prepare environment variables"
     steps:
+    - restore_cache:
+        keys:
+          - v1-hub-2.7.0
     - run:
         name: Install hub CLI client
         environment:
           HUB_VERSION: 2.7.0
           HUB_FOLDER: hub-linux-amd64-2.7.0
         command: |
-          wget https://github.com/github/hub/releases/download/v${HUB_VERSION}/${HUB_FOLDER}.tgz
-          tar -xzf ${HUB_FOLDER}.tgz
+          if [ ! -d "$HUB_FOLDER" ]; then
+            wget https://github.com/github/hub/releases/download/v${HUB_VERSION}/${HUB_FOLDER}.tgz
+            tar -xzf ${HUB_FOLDER}.tgz
+          fi
           echo "export PATH=$PATH:~/project/${HUB_FOLDER}/bin" >> $BASH_ENV
           echo "alias git=hub" >> $BASH_ENV
+    - save_cache:
+        key: v1-hub-2.7.0
+        paths:
+          - hub-linux-amd64-2.7.0
     - run:
         name: Get Pull Request ID
         # Add `-u $GITHUB_ACCESS_TOKEN:x-oauth-basic` if private repo
