@@ -19,7 +19,7 @@ commands:
         command: |
           wget https://github.com/github/hub/releases/download/v${HUB_VERSION}/${HUB_FOLDER}.tgz
           tar -xzf ${HUB_FOLDER}.tgz
-          echo "export PATH=$PATH:~/${HUB_FOLDER}/bin" >> $BASH_ENV
+          echo "export PATH=$PATH:~/project/${HUB_FOLDER}/bin" >> $BASH_ENV
           echo "alias git=hub" >> $BASH_ENV
     - run:
         name: Get Pull Request ID
@@ -28,8 +28,7 @@ commands:
         command: |
           if [[ -z "$CIRCLE_PR_NUMBER" ]]; then
               if [[ -z "$CIRCLE_PULL_REQUEST" ]]; then
-                  URL="https://api.github.com/repos/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/pulls?head=$CIRCLE_PROJECT_USERNAME:$CIRCLE_BRANCH"
-                  RESULT="`curl -X GET $URL | jq ".[0].url"`"
+                  RESULT="`git pr list --format=%I --head=${CIRLE_BRANCH}`"
                   [[ "$RESULT" == 'null' ]] && CIRCLE_PULL_REQUEST='' || CIRCLE_PULL_REQUEST="${RESULT//\"}"
               fi
               CIRCLE_PR_NUMBER="$(basename "$CIRCLE_PULL_REQUEST")"
@@ -37,8 +36,8 @@ commands:
           echo "export CIRCLE_PR_NUMBER=$CIRCLE_PR_NUMBER" >> $BASH_ENV
     - run:
         name: Get pull request base branch
-        command:
-          PR_BRANCH_TARGET="`git pr list --format=%B --head=${CIRCLE_BRANCH}`"
+        command: |
+          PR_BRANCH_TARGET="`hub pr list --format=%B --head=${CIRCLE_BRANCH}`"
           echo "export PR_BRANCH_TARGET=$PR_BRANCH_TARGET" >> $BASH_ENV
 
 
@@ -56,8 +55,6 @@ jobs:
             # TODO cache sonar plugin separately
             name: Run sonar-scanner
             command: |
-              echo 'export PATH=$PATH:~/project/sonar-scanner-3.2.0.1227-linux/bin' >> $BASH_ENV
-              source $BASH_ENV
               mvn org.sonarsource.scanner.maven:sonar-maven-plugin:3.5.0.1254:sonar \
                 -Dsonar.projectKey=blibli-future_command-plugin \
                 -Dsonar.organization=blibli-future \
@@ -81,7 +78,6 @@ jobs:
         - run:
             name: Run sonar scanner
             command: |
-              source $BASH_ENV
               mvn org.sonarsource.scanner.maven:sonar-maven-plugin:3.5.0.1254:sonar \
                 -Dsonar.projectKey=blibli-future_command-plugin \
                 -Dsonar.organization=blibli-future \
