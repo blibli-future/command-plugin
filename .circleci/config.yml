@@ -64,6 +64,9 @@ jobs:
             # TODO cache sonar plugin separately
             name: Run sonar-scanner
             command: |
+              git fetch --all
+              git branch -D ${PR_BRANCH_TARGET}
+              git rev-parse origin/${PR_BRANCH_TARGET}
               mvn org.sonarsource.scanner.maven:sonar-maven-plugin:3.5.0.1254:sonar \
                 -Dsonar.projectKey=blibli-future_command-plugin \
                 -Dsonar.organization=blibli-future \
